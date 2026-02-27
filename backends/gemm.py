@@ -168,25 +168,7 @@ def _make_matrices(cfg: GemmConfig, device: torch.device):
     return A_mat, B_mat, C
 
 
-def _is_fp8_dtype(dtype: torch.dtype) -> bool:
-    fp8_dtypes = [getattr(torch, "float8_e4m3fn", None), getattr(torch, "float8_e5m2", None)]
-    return dtype in {d for d in fp8_dtypes if d is not None}
-
-
-def _gemm(A, B, C, scale_a=None, scale_b=None):
-    # torch.mm(..., out=...) is fastest for standard dtypes, but it is not implemented
-    # on CUDA for FP8 in some PyTorch builds. For FP8, prefer torch._scaled_mm on
-    # Hopper/Blackwell, and fall back to matmul when unavailable.
-    if _is_fp8_dtype(A.dtype) or _is_fp8_dtype(B.dtype):
-        if hasattr(torch, "_scaled_mm"):
-            if scale_a is None:
-                scale_a = torch.ones((), device=A.device, dtype=torch.float32)
-            if scale_b is None:
-                scale_b = torch.ones((), device=B.device, dtype=torch.float32)
-            C.copy_(torch._scaled_mm(A, B, scale_a=scale_a, scale_b=scale_b, out_dtype=C.dtype))
-            return C
-        C.copy_(torch.matmul(A, B))
-        return C
+def _gemm(A, B, C):
     return torch.mm(A, B, out=C)
 
 
@@ -207,15 +189,12 @@ def _benchmark(cfg: GemmConfig, peak_tflops: float) -> dict:
     A, B, C = _make_matrices(cfg, device)
 
     fn = _gemm
-    fp8_scales = None
-    if _is_fp8_dtype(A.dtype) or _is_fp8_dtype(B.dtype):
-        fp8_scales = (
-            torch.ones((), device=A.device, dtype=torch.float32),
-            torch.ones((), device=B.device, dtype=torch.float32),
-        )
+    if cfg.dtype == "fp8":
+        scale_a = torch.ones((), device=A.device, dtype=torch.float32)
+        scale_b = torch.ones((), device=B.device, dtype=torch.float32)
 
         def fn(a, b, c):
-            return _gemm(a, b, c, scale_a=fp8_scales[0], scale_b=fp8_scales[1])
+            return torch._scaled_mm(a, b, scale_a=scale_a, scale_b=scale_b, out_dtype=c.dtype)
 
     if cfg.torch_compile:
         # Requires PyTorch 2.x
