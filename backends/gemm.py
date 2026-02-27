@@ -137,8 +137,9 @@ def _make_matrices(cfg: GemmConfig, device: torch.device):
         # Create in FP16 then cast down to FP8 for more realistic range.
         A = (torch.randn(*A_shape, device=device, dtype=torch.float16) * 0.5).to(fp8dtype)
         B = (torch.randn(*B_shape, device=device, dtype=torch.float16) * 0.5).to(fp8dtype)
-        # Keep output dtype aligned with FP8 inputs so torch.mm(..., out=...) is valid.
-        out_dtype = fp8dtype
+        # FP8 CUDA kernels commonly accumulate into BF16/FP16 outputs.
+        # Keep C in BF16 to support copy-based fallback paths.
+        out_dtype = torch.bfloat16
     elif cfg.dtype == "bf16":
         A = torch.randn(*A_shape, device=device, dtype=torch.bfloat16)
         B = torch.randn(*B_shape, device=device, dtype=torch.bfloat16)
@@ -162,10 +163,18 @@ def _make_matrices(cfg: GemmConfig, device: torch.device):
     return A_mat, B_mat, C
 
 
+def _is_fp8_dtype(dtype: torch.dtype) -> bool:
+    fp8_dtypes = [getattr(torch, "float8_e4m3fn", None), getattr(torch, "float8_e5m2", None)]
+    return dtype in {d for d in fp8_dtypes if d is not None}
+
+
 def _gemm(A, B, C):
-    # Use out= to avoid allocating each iteration.
-    # torch.matmul supports out for 2D inputs via torch.mm / torch.matmul? torch.matmul does not accept out
-    # reliably; use torch.mm for 2D.
+    # torch.mm(..., out=...) is fastest for standard dtypes, but it is not implemented
+    # on CUDA for FP8 in some PyTorch builds. For FP8, use matmul and copy the result
+    # into the pre-allocated output tensor.
+    if _is_fp8_dtype(A.dtype) or _is_fp8_dtype(B.dtype):
+        C.copy_(torch.matmul(A, B))
+        return C
     return torch.mm(A, B, out=C)
 
 
