@@ -48,3 +48,8 @@ Notes:
 - FP8 dtypes are only available if your framework build exposes them.
 - `fp4_e2m1` is an emulated format in this benchmark (stored/computed using `float16` after quantization).
 - Unsupported dtype/backend combinations are skipped with a warning.
+
+## GPU spec dataset
+
+A curated AI GPU specification dataset is provided at `gpu_specs_ai.json`, including major NVIDIA and AMD accelerators with peak throughput by datatype (where published), memory bandwidth/capacity, and power envelope.
+

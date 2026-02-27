@@ -1,0 +1,233 @@
+{
+  "schema_version": "1.0",
+  "description": "Major NVIDIA and AMD AI-focused GPUs with normalized peak throughput and memory specs. Throughput values are vendor-quoted peak theoretical unless otherwise noted.",
+  "units": {
+    "throughput": "TFLOPS_or_TOPS",
+    "memory_bandwidth": "TB_per_s",
+    "memory_capacity": "GB",
+    "power": "W"
+  },
+  "throughput_conventions": {
+    "dense": "No structured sparsity",
+    "sparse": "2:4 structured sparsity acceleration when supported",
+    "tensor_core": "Specialized matrix/AI compute units",
+    "notes": "TF32/FP16/BF16/FP8/INT8 values typically map to tensor/matrix engines for AI workloads"
+  },
+  "gpus": [
+    {
+      "vendor": "NVIDIA",
+      "model": "A100-SXM4-80GB",
+      "architecture": "Ampere",
+      "release_year": 2020,
+      "segment": "Datacenter AI/HPC",
+      "memory": {
+        "type": "HBM2e",
+        "capacity_gb": 80,
+        "bandwidth_tb_s": 2.039
+      },
+      "power_w": 400,
+      "peak": {
+        "fp64": { "dense": 9.7, "sparse": null },
+        "fp64_tensor": { "dense": 19.5, "sparse": null },
+        "fp32": { "dense": 19.5, "sparse": null },
+        "tf32_tensor": { "dense": 156, "sparse": 312 },
+        "fp16_tensor": { "dense": 312, "sparse": 624 },
+        "bf16_tensor": { "dense": 312, "sparse": 624 },
+        "fp8_tensor": { "dense": null, "sparse": null },
+        "int8_tensor": { "dense": 624, "sparse": 1248 },
+        "int4_tensor": { "dense": null, "sparse": null }
+      },
+      "sources": ["NVIDIA A100 product brief/spec table"]
+    },
+    {
+      "vendor": "NVIDIA",
+      "model": "H100-SXM-80GB",
+      "architecture": "Hopper",
+      "release_year": 2022,
+      "segment": "Datacenter AI/HPC",
+      "memory": {
+        "type": "HBM3",
+        "capacity_gb": 80,
+        "bandwidth_tb_s": 3.35
+      },
+      "power_w": 700,
+      "peak": {
+        "fp64": { "dense": 34, "sparse": null },
+        "fp64_tensor": { "dense": 67, "sparse": null },
+        "fp32": { "dense": 67, "sparse": null },
+        "tf32_tensor": { "dense": 494, "sparse": 989 },
+        "fp16_tensor": { "dense": 989, "sparse": 1979 },
+        "bf16_tensor": { "dense": 989, "sparse": 1979 },
+        "fp8_tensor": { "dense": 1979, "sparse": 3958 },
+        "int8_tensor": { "dense": 1979, "sparse": 3958 },
+        "int4_tensor": { "dense": null, "sparse": null }
+      },
+      "sources": ["NVIDIA H100 Tensor Core GPU architecture/specs"]
+    },
+    {
+      "vendor": "NVIDIA",
+      "model": "H200-SXM-141GB",
+      "architecture": "Hopper (H200)",
+      "release_year": 2024,
+      "segment": "Datacenter AI/HPC",
+      "memory": {
+        "type": "HBM3e",
+        "capacity_gb": 141,
+        "bandwidth_tb_s": 4.8
+      },
+      "power_w": 700,
+      "peak": {
+        "fp64": { "dense": 34, "sparse": null },
+        "fp64_tensor": { "dense": 67, "sparse": null },
+        "fp32": { "dense": 67, "sparse": null },
+        "tf32_tensor": { "dense": 494, "sparse": 989 },
+        "fp16_tensor": { "dense": 989, "sparse": 1979 },
+        "bf16_tensor": { "dense": 989, "sparse": 1979 },
+        "fp8_tensor": { "dense": 1979, "sparse": 3958 },
+        "int8_tensor": { "dense": 1979, "sparse": 3958 },
+        "int4_tensor": { "dense": null, "sparse": null }
+      },
+      "sources": ["NVIDIA H200 product specifications"]
+    },
+    {
+      "vendor": "NVIDIA",
+      "model": "B200-SXM-192GB",
+      "architecture": "Blackwell",
+      "release_year": 2024,
+      "segment": "Datacenter AI/HPC",
+      "memory": {
+        "type": "HBM3e",
+        "capacity_gb": 192,
+        "bandwidth_tb_s": 8.0
+      },
+      "power_w": 1000,
+      "peak": {
+        "fp64": { "dense": null, "sparse": null },
+        "fp64_tensor": { "dense": null, "sparse": null },
+        "fp32": { "dense": null, "sparse": null },
+        "tf32_tensor": { "dense": null, "sparse": null },
+        "fp16_tensor": { "dense": null, "sparse": null },
+        "bf16_tensor": { "dense": null, "sparse": null },
+        "fp8_tensor": { "dense": 2250, "sparse": 4500 },
+        "int8_tensor": { "dense": 4500, "sparse": null },
+        "int4_tensor": { "dense": 9000, "sparse": null }
+      },
+      "sources": ["NVIDIA Blackwell/B200 launch material"],
+      "notes": "Public Blackwell disclosures emphasize FP4/FP8 AI throughput; some traditional precision rows are not consistently published in one table."
+    },
+    {
+      "vendor": "NVIDIA",
+      "model": "L40S-48GB",
+      "architecture": "Ada Lovelace",
+      "release_year": 2023,
+      "segment": "Datacenter inference/graphics",
+      "memory": {
+        "type": "GDDR6",
+        "capacity_gb": 48,
+        "bandwidth_tb_s": 0.864
+      },
+      "power_w": 350,
+      "peak": {
+        "fp64": { "dense": 1.4, "sparse": null },
+        "fp64_tensor": { "dense": null, "sparse": null },
+        "fp32": { "dense": 91.6, "sparse": null },
+        "tf32_tensor": { "dense": 183, "sparse": null },
+        "fp16_tensor": { "dense": 733, "sparse": 1466 },
+        "bf16_tensor": { "dense": 733, "sparse": 1466 },
+        "fp8_tensor": { "dense": 1466, "sparse": 2932 },
+        "int8_tensor": { "dense": 1466, "sparse": 2932 },
+        "int4_tensor": { "dense": null, "sparse": null }
+      },
+      "sources": ["NVIDIA L40S datasheet"]
+    },
+    {
+      "vendor": "AMD",
+      "model": "Instinct MI100-32GB",
+      "architecture": "CDNA",
+      "release_year": 2020,
+      "segment": "Datacenter AI/HPC",
+      "memory": {
+        "type": "HBM2",
+        "capacity_gb": 32,
+        "bandwidth_tb_s": 1.23
+      },
+      "power_w": 300,
+      "peak": {
+        "fp64": { "dense": 11.5, "sparse": null },
+        "fp32": { "dense": 23.1, "sparse": null },
+        "fp16_matrix": { "dense": 184.6, "sparse": null },
+        "bf16_matrix": { "dense": null, "sparse": null },
+        "fp8_matrix": { "dense": null, "sparse": null },
+        "int8_matrix": { "dense": 184.6, "sparse": null }
+      },
+      "sources": ["AMD Instinct MI100 product specifications"]
+    },
+    {
+      "vendor": "AMD",
+      "model": "Instinct MI250X-128GB",
+      "architecture": "CDNA2",
+      "release_year": 2021,
+      "segment": "Datacenter AI/HPC",
+      "memory": {
+        "type": "HBM2e",
+        "capacity_gb": 128,
+        "bandwidth_tb_s": 3.2
+      },
+      "power_w": 500,
+      "peak": {
+        "fp64": { "dense": 47.9, "sparse": null },
+        "fp32": { "dense": 95.7, "sparse": null },
+        "fp16_matrix": { "dense": 383, "sparse": null },
+        "bf16_matrix": { "dense": 383, "sparse": null },
+        "fp8_matrix": { "dense": null, "sparse": null },
+        "int8_matrix": { "dense": 766, "sparse": null }
+      },
+      "sources": ["AMD Instinct MI250X specifications"]
+    },
+    {
+      "vendor": "AMD",
+      "model": "Instinct MI300X-192GB",
+      "architecture": "CDNA3",
+      "release_year": 2023,
+      "segment": "Datacenter AI/HPC",
+      "memory": {
+        "type": "HBM3",
+        "capacity_gb": 192,
+        "bandwidth_tb_s": 5.3
+      },
+      "power_w": 750,
+      "peak": {
+        "fp64": { "dense": 81.7, "sparse": null },
+        "fp32": { "dense": 163.4, "sparse": null },
+        "fp16_matrix": { "dense": 1307, "sparse": null },
+        "bf16_matrix": { "dense": 1307, "sparse": null },
+        "fp8_matrix": { "dense": 2614, "sparse": null },
+        "int8_matrix": { "dense": 2614, "sparse": null }
+      },
+      "sources": ["AMD Instinct MI300X platform specifications"]
+    },
+    {
+      "vendor": "AMD",
+      "model": "Instinct MI325X-256GB",
+      "architecture": "CDNA3 (refresh)",
+      "release_year": 2024,
+      "segment": "Datacenter AI/HPC",
+      "memory": {
+        "type": "HBM3e",
+        "capacity_gb": 256,
+        "bandwidth_tb_s": 6.0
+      },
+      "power_w": 1000,
+      "peak": {
+        "fp64": { "dense": 81.7, "sparse": null },
+        "fp32": { "dense": 163.4, "sparse": null },
+        "fp16_matrix": { "dense": 1307, "sparse": null },
+        "bf16_matrix": { "dense": 1307, "sparse": null },
+        "fp8_matrix": { "dense": 2614, "sparse": null },
+        "int8_matrix": { "dense": 2614, "sparse": null }
+      },
+      "sources": ["AMD Instinct MI325X launch specifications"],
+      "notes": "MI325X is primarily a memory-capacity/bandwidth upgrade over MI300X in public disclosures."
+    }
+  ]
+}
