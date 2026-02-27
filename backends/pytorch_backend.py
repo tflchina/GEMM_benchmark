@@ -38,19 +38,49 @@ class PyTorchBackend(GemmBackend):
             torch.manual_seed(seed)
 
         a, b = _create_inputs(m, n, k, dtype, device)
+        scale_a, scale_b = _create_input_scales(a, b, dtype)
 
         for _ in range(warmup):
-            _ = torch.matmul(a, b)
+            _ = _run_gemm(a, b, dtype, scale_a, scale_b)
         torch.cuda.synchronize()
 
         times_ms = []
         for _ in range(iters):
             start = time.perf_counter()
-            _ = torch.matmul(a, b)
+            _ = _run_gemm(a, b, dtype, scale_a, scale_b)
             torch.cuda.synchronize()
             times_ms.append((time.perf_counter() - start) * 1000.0)
 
         return _build_result(self.name, m, n, k, dtype, "cuda", times_ms)
+
+
+def _run_gemm(
+    a: torch.Tensor,
+    b: torch.Tensor,
+    dtype: str,
+    scale_a: torch.Tensor,
+    scale_b: torch.Tensor,
+) -> torch.Tensor:
+    if _is_fp8_dtype(dtype):
+        if not hasattr(torch, "_scaled_mm"):
+            raise ValueError("This PyTorch build does not support torch._scaled_mm required for FP8 GEMM.")
+        return torch._scaled_mm(a, b, scale_a=scale_a, scale_b=scale_b, out_dtype=torch.bfloat16)
+    return torch.matmul(a, b)
+
+
+def _create_input_scales(a: torch.Tensor, b: torch.Tensor, dtype: str) -> tuple[torch.Tensor, torch.Tensor]:
+    # torch._scaled_mm requires explicit scaling factors for FP8 matmul.
+    if _is_fp8_dtype(dtype):
+        scale_a = torch.tensor(1.0, device=a.device, dtype=torch.float32)
+        scale_b = torch.tensor(1.0, device=b.device, dtype=torch.float32)
+        return scale_a, scale_b
+
+    one = torch.tensor(1.0, device=a.device, dtype=torch.float32)
+    return one, one
+
+
+def _is_fp8_dtype(dtype: str) -> bool:
+    return dtype in {"fp8_e4m3fn", "fp8_e5m2"}
 
 
 def _create_inputs(m: int, n: int, k: int, dtype: str, device: torch.device):
