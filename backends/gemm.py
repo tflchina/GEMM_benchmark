@@ -30,6 +30,7 @@ Notes:
 """
 
 import argparse
+import csv
 import json
 from dataclasses import dataclass
 from typing import Literal
@@ -247,6 +248,7 @@ def main():
         help="Peak tensor TFLOP/s for your GPU at this dtype (used for MFU).",
     )
     ap.add_argument("--json-out", default="", help="Optional output json path.")
+    ap.add_argument("--csv-out", default="", help="Optional output csv path.")
     args = ap.parse_args()
 
     configs = _load_configs(args.config)
@@ -273,6 +275,60 @@ def main():
         with open(args.json_out, "w") as f:
             json.dump(payload, f, indent=2)
         print(f"Wrote: {args.json_out}")
+
+    if args.csv_out:
+        fieldnames = [
+            "gemm_shape",
+            "mfu",
+            "gpu",
+            "sm_count",
+            "dtype",
+            "fp8_format",
+            "layout",
+            "m",
+            "n",
+            "k",
+            "iters",
+            "warmup",
+            "ms_per_iter",
+            "tflops_achieved",
+            "peak_tflops",
+            "checksum",
+            "torch_compile",
+            "tf32",
+            "seed",
+        ]
+
+        with open(args.csv_out, "w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+
+            for result in results:
+                cfg = result["config"]
+                writer.writerow(
+                    {
+                        "gemm_shape": f"{cfg['m']}x{cfg['n']}x{cfg['k']}",
+                        "mfu": result["mfu"],
+                        "gpu": result["gpu"],
+                        "sm_count": result["sm_count"],
+                        "dtype": cfg["dtype"],
+                        "fp8_format": cfg["fp8_format"],
+                        "layout": cfg["layout"],
+                        "m": cfg["m"],
+                        "n": cfg["n"],
+                        "k": cfg["k"],
+                        "iters": result["iters"],
+                        "warmup": result["warmup"],
+                        "ms_per_iter": result["ms_per_iter"],
+                        "tflops_achieved": result["tflops_achieved"],
+                        "peak_tflops": result["peak_tflops"],
+                        "checksum": result["checksum"],
+                        "torch_compile": cfg["torch_compile"],
+                        "tf32": cfg["tf32"],
+                        "seed": cfg["seed"],
+                    }
+                )
+        print(f"Wrote: {args.csv_out}")
 
 
 if __name__ == "__main__":
