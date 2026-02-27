@@ -1,13 +1,21 @@
 {
-  "m": 9450,
-  "n": 5120,
-  "k": 5120,
-  "dtype": "bf16",    
+  "dtype": "bf16",
   "fp8_format": "e4m3fn",
   "layout": "nn",
   "warmup": 30,
   "iters": 200,
   "torch_compile": false,
-  "tf32": false
+  "tf32": false,
+  "gemms": [
+    {
+      "m": 9450,
+      "n": 5120,
+      "k": 5120
+    },
+    {
+      "m": 4096,
+      "n": 4096,
+      "k": 4096
+    }
+  ]
 }
-

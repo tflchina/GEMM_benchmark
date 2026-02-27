@@ -31,12 +31,8 @@ Notes:
 
 import argparse
 import json
-import math
-import os
-import sys
-import time
 from dataclasses import dataclass
-from typing import Literal, Optional, Tuple
+from typing import Literal
 
 import torch
 
@@ -59,10 +55,7 @@ class GemmConfig:
     seed: int = 0
 
 
-def _load_config(path: str) -> GemmConfig:
-    with open(path, "r") as f:
-        d = json.load(f)
-
+def _build_config(d: dict) -> GemmConfig:
     def get(name, default):
         return d[name] if name in d else default
 
@@ -86,6 +79,33 @@ def _load_config(path: str) -> GemmConfig:
     if cfg.fp8_format not in ("e4m3fn", "e5m2"):
         raise ValueError(f"Unsupported fp8_format: {cfg.fp8_format}")
     return cfg
+
+
+def _load_configs(path: str) -> list[GemmConfig]:
+    with open(path, "r") as f:
+        d = json.load(f)
+
+    if isinstance(d, dict) and "gemms" in d:
+        gemms = d["gemms"]
+        if not isinstance(gemms, list) or not gemms:
+            raise ValueError("`gemms` must be a non-empty list of GEMM configs")
+
+        defaults = {k: v for k, v in d.items() if k != "gemms"}
+        merged = []
+        for item in gemms:
+            if not isinstance(item, dict):
+                raise ValueError("Each entry in `gemms` must be a JSON object")
+            merged_cfg = {**defaults, **item}
+            merged.append(_build_config(merged_cfg))
+        return merged
+
+    if isinstance(d, dict):
+        return [_build_config(d)]
+
+    if isinstance(d, list) and d:
+        return [_build_config(item) for item in d]
+
+    raise ValueError("Config must be an object, a list of objects, or an object with `gemms` list")
 
 
 def _pick_fp8_dtype(fmt: str):
@@ -229,24 +249,29 @@ def main():
     ap.add_argument("--json-out", default="", help="Optional output json path.")
     args = ap.parse_args()
 
-    cfg = _load_config(args.config)
-    res = _benchmark(cfg, args.peak_tflops)
+    configs = _load_configs(args.config)
+    results = []
 
-    # Pretty print
-    print("\n=== GEMM MFU Benchmark ===")
-    print(f"GPU: {res['gpu']}")
-    print(f"Shape (m,n,k): {cfg.m}, {cfg.n}, {cfg.k}")
-    print(f"DType: {cfg.dtype} (fp8_format={cfg.fp8_format if cfg.dtype=='fp8' else 'n/a'})")
-    print(f"Layout: {cfg.layout}")
-    print(f"Time: {res['ms_per_iter']:.6f} ms / iter (iters={cfg.iters}, warmup={cfg.warmup})")
-    print(f"Achieved: {res['tflops_achieved']:.2f} TFLOP/s")
-    print(f"Peak: {res['peak_tflops']:.2f} TFLOP/s")
-    print(f"MFU: {res['mfu']*100:.2f}%")
-    print(f"Checksum: {res['checksum']}\n")
+    for idx, cfg in enumerate(configs, start=1):
+        res = _benchmark(cfg, args.peak_tflops)
+        results.append(res)
+
+        # Pretty print
+        print(f"\n=== GEMM MFU Benchmark [{idx}/{len(configs)}] ===")
+        print(f"GPU: {res['gpu']}")
+        print(f"Shape (m,n,k): {cfg.m}, {cfg.n}, {cfg.k}")
+        print(f"DType: {cfg.dtype} (fp8_format={cfg.fp8_format if cfg.dtype=='fp8' else 'n/a'})")
+        print(f"Layout: {cfg.layout}")
+        print(f"Time: {res['ms_per_iter']:.6f} ms / iter (iters={cfg.iters}, warmup={cfg.warmup})")
+        print(f"Achieved: {res['tflops_achieved']:.2f} TFLOP/s")
+        print(f"Peak: {res['peak_tflops']:.2f} TFLOP/s")
+        print(f"MFU: {res['mfu']*100:.2f}%")
+        print(f"Checksum: {res['checksum']}\n")
 
     if args.json_out:
+        payload = results[0] if len(results) == 1 else {"results": results}
         with open(args.json_out, "w") as f:
-            json.dump(res, f, indent=2)
+            json.dump(payload, f, indent=2)
         print(f"Wrote: {args.json_out}")
 
 
