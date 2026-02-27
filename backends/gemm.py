@@ -137,8 +137,8 @@ def _make_matrices(cfg: GemmConfig, device: torch.device):
         # Create in FP16 then cast down to FP8 for more realistic range.
         A = (torch.randn(*A_shape, device=device, dtype=torch.float16) * 0.5).to(fp8dtype)
         B = (torch.randn(*B_shape, device=device, dtype=torch.float16) * 0.5).to(fp8dtype)
-        # Output/accum: use FP16 by default (matmul will typically accumulate in FP16/FP32 internally)
-        out_dtype = torch.float16
+        # Keep output dtype aligned with FP8 inputs so torch.mm(..., out=...) is valid.
+        out_dtype = fp8dtype
     elif cfg.dtype == "bf16":
         A = torch.randn(*A_shape, device=device, dtype=torch.bfloat16)
         B = torch.randn(*B_shape, device=device, dtype=torch.bfloat16)
