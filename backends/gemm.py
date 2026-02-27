@@ -158,6 +158,11 @@ def _make_matrices(cfg: GemmConfig, device: torch.device):
     A_mat = A_mat.contiguous()
     B_mat = B_mat.contiguous()
 
+    # cuBLASLt-backed torch._scaled_mm currently expects row-major @ column-major.
+    # Keep A row-major and re-layout B to column-major without changing its shape.
+    if cfg.dtype == "fp8":
+        B_mat = B_mat.t().contiguous().t()
+
     # Create output to avoid allocation in loop.
     C = torch.empty((cfg.m, cfg.n), device=device, dtype=out_dtype)
     return A_mat, B_mat, C
